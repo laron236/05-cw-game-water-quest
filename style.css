@@ -18,12 +18,14 @@ Fonts:
 
 */
 
+@import url('https://fonts.googleapis.com/css2?family=Avenir:wght@400;700&family=Montserrat:wght@400;700&display=swap');
+
 * {
   box-sizing: border-box;
 }
 
 body {
-  font-family: Arial, sans-serif;
+  font-family: 'Avenir', 'Montserrat', 'Segoe UI', 'Arial', sans-serif;
   margin: 0;
   padding: 30px;
   background: linear-gradient(135deg, #8BD1CB 0%, #4FCB53 100%);
@@ -149,6 +151,144 @@ button {
   text-shadow: none;
 }
 
+.charitywater-links {
+  max-width: 750px;
+  margin: 30px auto 0 auto;
+  background: linear-gradient(90deg, #FFC907 0%, #2E9DF7 100%);
+  border-radius: 10px;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+  padding: 32px 24px 28px 24px;
+  text-align: center;
+  color: #222;
+}
+.charitywater-links h2 {
+  font-family: 'Avenir', 'Montserrat', sans-serif;
+  font-size: 1.6rem;
+  margin-bottom: 10px;
+  color: #159A48;
+  letter-spacing: 0.5px;
+}
+.charitywater-links p {
+  font-size: 1.1rem;
+  margin-bottom: 18px;
+  color: #333;
+}
+.cw-link-buttons {
+  display: flex;
+  justify-content: center;
+  gap: 18px;
+  flex-wrap: wrap;
+}
+.cw-btn {
+  display: inline-block;
+  font-family: 'Avenir', 'Montserrat', sans-serif;
+  font-weight: 700;
+  font-size: 1.1rem;
+  padding: 12px 28px;
+  border-radius: 6px;
+  text-decoration: none;
+  transition: background 0.2s, color 0.2s, box-shadow 0.2s;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.07);
+  margin-bottom: 8px;
+}
+.cw-btn.main-site {
+  background: #2E9DF7;
+  color: #fff;
+}
+.cw-btn.main-site:hover,
+.cw-btn.main-site:focus {
+  background: #159A48;
+  color: #fff;
+}
+.cw-btn.donate {
+  background: #FFC907;
+  color: #222;
+}
+.cw-btn.donate:hover,
+.cw-btn.donate:focus {
+  background: #F5402C;
+  color: #fff;
+}
+
+.cw-side-panel {
+  position: fixed;
+  top: 0;
+  width: 110px;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  background: linear-gradient(180deg, #FFC907 0%, #2E9DF7 100%);
+  z-index: 1000;
+  box-shadow: 0 0 16px #2E9DF733;
+  padding-top: 32px;
+  color: #222;
+  font-family: 'Avenir', 'Montserrat', sans-serif;
+  font-size: 1.05em;
+  letter-spacing: 0.01em;
+  user-select: none;
+}
+.cw-side-panel-left { left: 0; border-top-right-radius: 18px; border-bottom-right-radius: 18px; }
+.cw-side-panel-right { right: 0; border-top-left-radius: 18px; border-bottom-left-radius: 18px; }
+.cw-logo-panel {
+  width: 60px;
+  height: 60px;
+  margin-bottom: 18px;
+  border-radius: 12px;
+  background: #fff;
+  box-shadow: 0 2px 8px #0001;
+}
+.cw-side-fact-container {
+  margin: 0 8px 18px 8px;
+  background: #fff8;
+  border-radius: 8px;
+  padding: 10px 8px;
+  min-height: 48px;
+  display: flex;
+  align-items: center;
+  text-align: center;
+  font-size: 1em;
+  color: #2E9DF7;
+  font-weight: 600;
+}
+.cw-side-social {
+  margin-top: 10px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  font-size: 1.1em;
+}
+.cw-side-social a {
+  margin: 2px 0;
+  font-size: 1.5em;
+  color: #2E9DF7;
+  text-decoration: none;
+  transition: color 0.2s;
+}
+.cw-side-social a:hover,
+.cw-side-social a:focus {
+  color: #F5402C;
+}
+.cw-side-impact {
+  margin-top: 40px;
+  background: #fff8;
+  border-radius: 8px;
+  padding: 12px 8px;
+  font-size: 1.08em;
+  color: #159A48;
+  font-weight: 700;
+  text-align: center;
+}
+.cw-side-hashtag {
+  margin-top: 18px;
+  font-size: 1.2em;
+  color: #F5402C;
+  font-weight: bold;
+  text-align: center;
+}
+
 @media (max-width: 900px) {
   .container {
     max-width: 95vw;
@@ -205,5 +345,20 @@ button {
     padding: 8px 12px;
     margin: 16px auto 0;
     border-radius: 5px;
+  }
+  .charitywater-links {
+    padding: 20px 8px 18px 8px;
+  }
+  .cw-link-buttons {
+    flex-direction: column;
+    gap: 10px;
+  }
+  .cw-btn {
+    width: 100%;
+    font-size: 1rem;
+    padding: 12px 0;
+  }
+  .cw-side-panel {
+    display: none !important;
   }
 }

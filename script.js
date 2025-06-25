@@ -9,6 +9,39 @@ let timeLeft = 30;           // Initial time for the timer
 // Add high score tracking
 let highScore = localStorage.getItem('hydrateTheWorldHighScore') ? parseInt(localStorage.getItem('hydrateTheWorldHighScore')) : 0;
 
+// Difficulty modes configuration
+const difficulties = {
+  Easy: {
+    label: 'Easy',
+    goal: 15,
+    spawnRate: 1200,
+    timer: 40,
+    description: 'Relaxed pace, more time, fewer cans needed!'
+  },
+  Normal: {
+    label: 'Normal',
+    goal: 25,
+    spawnRate: 1000,
+    timer: 30,
+    description: 'Classic Hydrate the World experience.'
+  },
+  Hard: {
+    label: 'Hard',
+    goal: 35,
+    spawnRate: 650,
+    timer: 20,
+    description: 'Fast cans, less time, more challenge!'
+  },
+  "Hydration Frenzy": {
+    label: 'Hydration Frenzy',
+    goal: 50,
+    spawnRate: 350,
+    timer: 15,
+    description: 'Cans everywhere! Can you keep up?'
+  }
+};
+let currentDifficulty = 'Normal';
+
 // Creates the 3x3 game grid where items will appear
 function createGrid() {
   const grid = document.querySelector('.game-grid');
@@ -76,12 +109,19 @@ function collectCan() {
   currentCans++;
   document.getElementById('current-cans').textContent = currentCans;
   this.parentElement.innerHTML = '';
+  // Show milestone message if applicable
+  milestones.forEach(m => {
+    if (currentCans === m.score && !milestonesShown[m.score]) {
+      showMilestoneMessage(m.message);
+      milestonesShown[m.score] = true;
+    }
+  });
   if (currentCans > highScore) {
     highScore = currentCans;
     localStorage.setItem('hydrateTheWorldHighScore', highScore);
     updateHighScoreDisplay();
   }
-  if (currentCans >= GOAL_CANS) {
+  if (currentCans >= getCurrentDifficulty().goal) {
     endGame();
     showGameOverMessage(true);
   }
@@ -100,35 +140,52 @@ function startGame() {
   if (gameActive) return; // Prevent starting a new game if one is already active
   // Clear game over message
   document.getElementById('achievements').innerHTML = '';
-  currentCans = 0;
-  document.getElementById('current-cans').textContent = currentCans;
-  gameActive = true;
-  timeLeft = 30;
-  updateTimer();
-  createGrid(); // Set up the game grid
-  spawnInterval = setInterval(spawnWaterCan, 1000); // Spawn water cans every second
-  timerInterval = setInterval(() => {
-    timeLeft--;
-    updateTimer();
-  }, 1000);
+  // Remove any popups if present
+  let popup = document.getElementById('instructions-popup');
+  if (popup) popup.remove();
+  popup = document.getElementById('countdown-popup');
+  if (popup) popup.remove();
+
+  showInstructionsPopup(() => {
+    showCountdownAndStartGame();
+  });
 }
 
 function endGame() {
   gameActive = false;
   clearInterval(spawnInterval);
   clearInterval(timerInterval);
-  if (currentCans < GOAL_CANS) {
+  if (currentCans < getCurrentDifficulty().goal) {
     showGameOverMessage(false);
   }
 }
 
+// Winning and losing messages
+const winningMessages = [
+  "Congratulations! You hydrated the world! 💧🌍",
+  "Amazing! You brought clean water to everyone!",
+  "You did it! Every can counts!",
+  "Victory! The world is a little brighter now.",
+  "Incredible! You made a difference!"
+];
+const losingMessages = [
+  "Try again! The world still needs you.",
+  "Don't Give Up! Any and Everything Can Help.",
+  "Almost there! Give it another go.",
+  "Keep going! Clean water is worth it.",
+  "So close! Try once more."
+];
+
 function showGameOverMessage(win) {
   const achievements = document.getElementById('achievements');
+  let msg;
   if (win) {
-    achievements.innerHTML = '<span class="win-message">You Win! 🎉</span>';
+    msg = winningMessages[Math.floor(Math.random() * winningMessages.length)];
+    achievements.innerHTML = `<span class="win-message">${msg}</span>`;
     launchConfetti();
   } else {
-    achievements.innerHTML = '<span class="lose-message">Game Over! Try again!</span>';
+    msg = losingMessages[Math.floor(Math.random() * losingMessages.length)];
+    achievements.innerHTML = `<span class="lose-message">${msg}</span>`;
   }
 }
 
@@ -209,7 +266,7 @@ function setRandomFact() {
 
 function startFactRotation() {
   setRandomFact();
-  setInterval(setRandomFact, 30000);
+  setInterval(setRandomFact, 10000); // Change every 10 seconds
 }
 
 // Add the fact bar to the bottom of the page
@@ -287,6 +344,13 @@ function createSettingsUI() {
           <button id="sound-toggle" style="background:#2E9DF7;color:#fff;border:none;border-radius:16px;padding:6px 18px;font-size:1em;cursor:pointer;">On</button>
         </div>
         <div style="margin-bottom:18px;">
+          <span style="font-weight:bold;">Difficulty</span>
+          <select id="difficulty-select" style="margin-left:10px;padding:4px 10px;border-radius:8px;font-size:1em;">
+            ${Object.keys(difficulties).map(d => `<option value="${d}">${difficulties[d].label}</option>`).join('')}
+          </select>
+          <div id="difficulty-desc" style="font-size:0.95em;color:#2E9DF7;margin-top:4px;text-align:center;"></div>
+        </div>
+        <div style="margin-bottom:18px;">
           <h3 style="margin:0 0 6px 0;font-size:1.1em;color:#F5402C;">About charity: water</h3>
           <p style="font-size:0.98em;line-height:1.5;color:#333;">charity: water is a non-profit organization bringing clean and safe drinking water to people in developing countries. 100% of public donations fund water projects. Learn more at <a href='https://www.charitywater.org/' target='_blank' style='color:#2E9DF7;text-decoration:underline;'>charitywater.org</a>.</p>
         </div>
@@ -315,6 +379,18 @@ function createSettingsUI() {
     updateSoundBtn();
   };
 
+  // Difficulty selector logic
+  const diffSelect = modal.querySelector('#difficulty-select');
+  const diffDesc = modal.querySelector('#difficulty-desc');
+  diffSelect.value = currentDifficulty;
+  diffDesc.textContent = difficulties[currentDifficulty].description;
+  diffSelect.onchange = function() {
+    currentDifficulty = this.value;
+    localStorage.setItem('hydrateTheWorldDifficulty', currentDifficulty);
+    diffDesc.textContent = difficulties[currentDifficulty].description;
+    updateInstructionsText(); // <-- Add this line
+  };
+
   // Reset button
   modal.querySelector('#reset-btn').onclick = () => {
     if (confirm('Are you sure you want to reset your high score and progress?')) {
@@ -327,4 +403,152 @@ function createSettingsUI() {
 }
 
 // Call on load
-window.addEventListener('DOMContentLoaded', createSettingsUI);
+window.addEventListener('DOMContentLoaded', () => {
+  createSettingsUI();
+  const savedDiff = localStorage.getItem('hydrateTheWorldDifficulty');
+  if (savedDiff && difficulties[savedDiff]) currentDifficulty = savedDiff;
+  updateInstructionsText();
+
+  // Accessibility: Add aria-live to dynamic message containers
+  // Add aria-live to achievements for screen readers
+  const achievements = document.getElementById('achievements');
+  if (achievements) achievements.setAttribute('aria-live', 'polite');
+});
+
+// --- Instructions Popup ---
+function showInstructionsPopup(callback) {
+  // Remove any existing popup
+  let popup = document.getElementById('instructions-popup');
+  if (popup) popup.remove();
+
+  // Create popup
+  popup = document.createElement('div');
+  popup.id = 'instructions-popup';
+  popup.style.position = 'fixed';
+  popup.style.top = '50%';
+  popup.style.left = '50%';
+  popup.style.transform = 'translate(-50%, -50%)';
+  popup.style.background = '#fff';
+  popup.style.color = '#2E9DF7';
+  popup.style.padding = '32px 24px';
+  popup.style.borderRadius = '16px';
+  popup.style.boxShadow = '0 8px 32px #0002';
+  popup.style.zIndex = 30000;
+  popup.style.textAlign = 'center';
+  popup.style.fontSize = '1.2em';
+  popup.innerHTML = `
+    <h2>How to Play (${difficulties[currentDifficulty].label})</h2>
+    <p>${difficulties[currentDifficulty].description}</p>
+    <p style="margin-top:12px;font-size:1em;color:#333;">
+      Collect <b>${difficulties[currentDifficulty].goal}</b> cans in <b>${difficulties[currentDifficulty].timer}</b> seconds.<br>
+      Avoid obstacles and beat your high score!
+    </p>
+    <p style="margin-top:18px;color:#888;font-size:0.95em;">Game starts soon...</p>
+  `;
+  document.body.appendChild(popup);
+
+  setTimeout(() => {
+    popup.remove();
+    callback();
+  }, 10000); // Show for 10 seconds
+}
+
+function showCountdownAndStartGame() {
+  let countdown = 3;
+  let popup = document.createElement('div');
+  popup.id = 'countdown-popup';
+  popup.style.position = 'fixed';
+  popup.style.top = '50%';
+  popup.style.left = '50%';
+  popup.style.transform = 'translate(-50%, -50%)';
+  popup.style.background = '#fff';
+  popup.style.color = '#F5402C';
+  popup.style.padding = '32px 24px';
+  popup.style.borderRadius = '16px';
+  popup.style.boxShadow = '0 8px 32px #0002';
+  popup.style.zIndex = 30000;
+  popup.style.textAlign = 'center';
+  popup.style.fontSize = '2.5em';
+  popup.textContent = countdown;
+  document.body.appendChild(popup);
+
+  const interval = setInterval(() => {
+    countdown--;
+    if (countdown > 0) {
+      popup.textContent = countdown;
+    } else {
+      clearInterval(interval);
+      popup.remove();
+      actuallyStartGame();
+    }
+  }, 1000);
+}
+
+function actuallyStartGame() {
+  currentCans = 0;
+  document.getElementById('current-cans').textContent = currentCans;
+  const diff = getCurrentDifficulty();
+  timeLeft = diff.timer;
+  updateTimer();
+  createGrid();
+  gameActive = true;
+  spawnWaterCan(); // <-- Add this line!
+  spawnInterval = setInterval(spawnWaterCan, diff.spawnRate);
+  timerInterval = setInterval(() => {
+    timeLeft--;
+    updateTimer();
+  }, 1000);
+}
+
+function getCurrentDifficulty() {
+  return difficulties[currentDifficulty] || difficulties['Normal'];
+}
+
+// Add this function to update the instructions text
+function updateInstructionsText() {
+  const instructions = document.querySelector('.game-instructions');
+  const diff = getCurrentDifficulty();
+  if (instructions && diff) {
+    instructions.textContent = `Collect ${diff.goal} items to complete the game!`;
+  }
+}
+
+// Milestone messages for player progress
+const milestones = [
+  { score: 5, message: "Great start! Keep going!" },
+  { score: 10, message: "Halfway there!" },
+  { score: 15, message: "Amazing! You're making a difference!" },
+  { score: 20, message: "So close! Don't stop now!" }
+];
+let milestonesShown = {};
+
+// Show milestone message function
+function showMilestoneMessage(msg) {
+  const achievements = document.getElementById('achievements');
+  if (!achievements) return;
+  const milestoneElem = document.createElement('div');
+  milestoneElem.className = 'milestone-message';
+  milestoneElem.textContent = msg;
+  achievements.appendChild(milestoneElem);
+  setTimeout(() => {
+    if (milestoneElem.parentNode) milestoneElem.remove();
+  }, 2000);
+}
+
+// Event Delegation Example (optional, for future scalability)
+// For now, direct listeners are fine, but here's how you'd do it:
+// document.querySelector('.game-grid').addEventListener('click', function(e) {
+//   if (e.target.classList.contains('water-can')) {
+//     collectCan.call(e.target);
+//   }
+// });
+
+// Modular DOM manipulation functions are already used throughout the code:
+// - spawnWaterCan: adds/removes cans
+// - showInstructionsPopup: adds/removes instructions popup
+// - showGameOverMessage: updates achievements
+// - updateInstructionsText, updateHighScoreDisplay: update text
+// - collectCan: removes can after click
+// - All state is kept in JS variables, not the DOM
+// - Unique IDs for popups, classes for repeated elements
+// - Confetti uses CSS animation and is removed after animation
