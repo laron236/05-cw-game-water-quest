@@ -106,6 +106,12 @@ updateHighScoreDisplay();
 
 function collectCan() {
   if (!gameActive) return;
+  // Play click sound if enabled
+  let soundOn = localStorage.getItem('hydrateTheWorldSound') !== 'off';
+  if (typeof clickAudio !== 'undefined' && soundOn) {
+    clickAudio.currentTime = 0;
+    clickAudio.play();
+  }
   currentCans++;
   document.getElementById('current-cans').textContent = currentCans;
   this.parentElement.innerHTML = '';
@@ -122,6 +128,12 @@ function collectCan() {
     updateHighScoreDisplay();
   }
   if (currentCans >= getCurrentDifficulty().goal) {
+    // Play level complete sound if enabled
+    let soundOn = localStorage.getItem('hydrateTheWorldSound') !== 'off';
+    if (typeof levelCompleteAudio !== 'undefined' && soundOn) {
+      levelCompleteAudio.currentTime = 0;
+      levelCompleteAudio.play();
+    }
     endGame();
     showGameOverMessage(true);
   }
@@ -421,6 +433,15 @@ function showInstructionsPopup(callback) {
   let popup = document.getElementById('instructions-popup');
   if (popup) popup.remove();
 
+  // Play instructions sound if enabled
+  if (typeof instructionsAudio !== 'undefined') {
+    let soundOn = localStorage.getItem('hydrateTheWorldSound') !== 'off';
+    if (soundOn) {
+      instructionsAudio.currentTime = 0;
+      instructionsAudio.play();
+    }
+  }
+
   // Create popup
   popup = document.createElement('div');
   popup.id = 'instructions-popup';
@@ -450,7 +471,7 @@ function showInstructionsPopup(callback) {
   setTimeout(() => {
     popup.remove();
     callback();
-  }, 10000); // Show for 10 seconds
+  }, 5000); // Show for 5 seconds
 }
 
 function showCountdownAndStartGame() {
@@ -534,6 +555,27 @@ function showMilestoneMessage(msg) {
     if (milestoneElem.parentNode) milestoneElem.remove();
   }, 2000);
 }
+
+// Preload instructions sound
+let instructionsAudio;
+window.addEventListener('DOMContentLoaded', () => {
+  instructionsAudio = new Audio('Sounds/Instructions water splash.mp3');
+  instructionsAudio.preload = 'auto';
+});
+
+// Preload click sound
+let clickAudio;
+window.addEventListener('DOMContentLoaded', () => {
+  clickAudio = new Audio('Sounds/click sound water drop.mp3');
+  clickAudio.preload = 'auto';
+});
+
+// Preload level complete sound
+let levelCompleteAudio;
+window.addEventListener('DOMContentLoaded', () => {
+  levelCompleteAudio = new Audio('Sounds/level complete sound.mp3');
+  levelCompleteAudio.preload = 'auto';
+});
 
 // Event Delegation Example (optional, for future scalability)
 // For now, direct listeners are fine, but here's how you'd do it:
