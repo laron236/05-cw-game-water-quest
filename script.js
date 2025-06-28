@@ -15,29 +15,29 @@ const difficulties = {
     label: 'Easy',
     goal: 15,
     spawnRate: 1200,
-    timer: 40,
-    description: 'Relaxed pace, more time, fewer cans needed!'
+    timer: 50, // +10s
+    description: 'Relaxed pace, more time, fewer cans needed! Avoid dirty water obstacles.'
   },
   Normal: {
     label: 'Normal',
     goal: 25,
     spawnRate: 1000,
-    timer: 30,
-    description: 'Classic Hydrate the World experience.'
+    timer: 40, // +10s
+    description: 'Classic Hydrate the World experience. Watch out for dirty water!'
   },
   Hard: {
     label: 'Hard',
     goal: 35,
     spawnRate: 650,
-    timer: 20,
-    description: 'Fast cans, less time, more challenge!'
+    timer: 28, // +8s
+    description: 'Fast cans, less time, more challenge! Avoid dirty water!'
   },
   "Hydration Frenzy": {
     label: 'Hydration Frenzy',
     goal: 50,
     spawnRate: 350,
-    timer: 15,
-    description: 'Cans everywhere! Can you keep up?'
+    timer: 20, // +5s
+    description: 'Cans everywhere! Can you keep up? Dirty water makes it harder!'
   }
 };
 let currentDifficulty = 'Normal';
@@ -56,28 +56,53 @@ function createGrid() {
 // Ensure the grid is created when the page loads
 createGrid();
 
-// Spawns a new item in a random grid cell
+// Spawns a new item (can or obstacle) in a random grid cell
 function spawnWaterCan() {
-  if (!gameActive) return; // Stop if the game is not active
+  if (!gameActive) return;
   const cells = document.querySelectorAll('.grid-cell');
-  
-  // Clear all cells before spawning a new water can
   cells.forEach(cell => (cell.innerHTML = ''));
-
-  // Select a random cell from the grid to place the water can
   const randomCell = cells[Math.floor(Math.random() * cells.length)];
-
-  // Use a template literal to create the wrapper and water-can element
-  randomCell.innerHTML = `
-    <div class="water-can-wrapper">
-      <div class="water-can"></div>
-    </div>
-  `;
-
-  // Add click event to the water can
-  const can = randomCell.querySelector('.water-can');
-  if (can) {
-    can.addEventListener('click', collectCan, { once: true });
+  // 25% chance to spawn obstacle, 75% can
+  if (Math.random() < 0.25) {
+    randomCell.innerHTML = `
+      <div class="obstacle-wrapper">
+        <img src="img/Dirty Water.jpg" alt="Dirty Water Obstacle" class="dirty-water" onerror="this.onerror=null;this.src='img/backup-dirty-water.png';this.style.background='#fff';" />
+      </div>
+    `;
+    const obstacle = randomCell.querySelector('.dirty-water');
+    if (obstacle) {
+      obstacle.addEventListener('click', hitObstacle, { once: true });
+    }
+// Handle clicking a dirty water obstacle
+function hitObstacle() {
+  if (!gameActive) return;
+  // Subtract a point, but not below zero
+  if (currentCans > 0) {
+    currentCans--;
+    document.getElementById('current-cans').textContent = currentCans;
+  }
+  // Show feedback message
+  const msg = document.createElement('div');
+  msg.className = 'obstacle-message';
+  msg.textContent = '-1! Dirty water!';
+  this.parentElement.appendChild(msg);
+  setTimeout(() => {
+    if (msg.parentNode) msg.remove();
+    // Remove the obstacle image after feedback
+    if (this.parentElement) this.parentElement.innerHTML = '';
+  }, 900);
+  // Optionally play a sound here if you have one for obstacles
+}
+  } else {
+    randomCell.innerHTML = `
+      <div class="water-can-wrapper">
+        <div class="water-can"></div>
+      </div>
+    `;
+    const can = randomCell.querySelector('.water-can');
+    if (can) {
+      can.addEventListener('click', collectCan, { once: true });
+    }
   }
 }
 
@@ -235,6 +260,43 @@ style.textContent = `
 }
 .win-message { color: #2ecc40; font-size: 2em; font-weight: bold; }
 .lose-message { color: #ff4136; font-size: 2em; font-weight: bold; }
+
+/* Obstacle styles */
+.obstacle-wrapper {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 70px;
+  height: 70px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.dirty-water {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  border-radius: 50%;
+  box-shadow: 0 2px 8px #0002;
+  border: 2px solid var(--cw-red);
+  background: #fff;
+  cursor: pointer;
+  animation: popUp 0.5s cubic-bezier(0.17, 0.67, 0.34, 2);
+}
+.obstacle-message {
+  color: var(--cw-red);
+  font-size: 1.1em;
+  font-weight: bold;
+  margin-top: 8px;
+  text-align: center;
+  animation: fadeOut 1.5s forwards;
+}
+@keyframes fadeOut {
+  0% { opacity: 1; }
+  80% { opacity: 1; }
+  100% { opacity: 0; }
+}
 `;
 document.head.appendChild(style);
 
